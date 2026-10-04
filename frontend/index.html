@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hotel Zero-Day</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@700&family=Special+Elite&family=VT323&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="vignette"></div>
+    <div id="grain"></div>
+    <div id="fade"></div>
+    <div id="redflash"></div>
+    <div id="scareline"></div>
+
+    <div id="hud" class="hidden">
+      <div id="crosshair"></div>
+      <div id="prompt"></div>
+      <div id="msg"></div>
+      <div id="stats">
+        <div><span class="label">PUNTAJE</span> <span id="score">0</span></div>
+        <div id="objective"></div>
+        <div id="savehint" class="hidden">[G] GUARDAR PARTIDA</div>
+      </div>
+      <div id="keys">WASD mover · Shift correr · E usar · F linterna</div>
+      <div id="dev" class="hidden">
+        <strong>MODO DEV</strong> · decodificador + puertas destrabadas<br />
+        1 → 101 · 2 → 102 · 3 → 103 · 4 → 104 · 5 → salida · º para salir
+      </div>
+    </div>
+
+    <div id="start" class="overlay">
+      <div class="panel">
+        <h1>HOTEL<br /><span>ZERO-DAY</span></h1>
+        <p class="lore">
+          2032. Vertrix, la IA que escribe todo el código del mundo, prohibió a los humanos programar. Sos parte de
+          la Resistencia y quedaste atrapado en un hotel abandonado: cada habitación esconde una prueba. Por ahora el
+          objetivo es uno solo: salir con vida.
+        </p>
+        <input id="name" maxlength="20" placeholder="Tu nombre" autocomplete="off" />
+        <button id="continue" class="hidden"></button>
+        <button id="enter">NUEVA PARTIDA</button>
+        <button id="replay-intro" class="link">ver intro</button>
+        <p class="controls">Mouse para mirar · WASD para moverte · Shift correr · E interactuar · F linterna · Esc pausa</p>
+        <p id="start-error" class="error"></p>
+        <p class="fiction-note">Obra de ficción: cualquier similitud con la realidad es mera coincidencia.</p>
+      </div>
+    </div>
+
+    <div id="pause" class="overlay hidden">
+      <div class="panel small">
+        <h2>PAUSA</h2>
+        <button id="resume">CONTINUAR</button>
+      </div>
+    </div>
+
+    <div id="question" class="overlay hidden">
+      <div class="terminal">
+        <div id="q-header"></div>
+        <div id="q-text"></div>
+        <div id="q-options"></div>
+        <div id="q-result" class="hidden">
+          <div id="q-verdict"></div>
+          <div id="q-explanation"></div>
+          <button id="q-continue">VOLVER AL HOTEL</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nota / afiche legible -->
+    <div id="note" class="overlay hidden">
+      <div class="paper">
+        <div id="note-body"></div>
+        <button id="note-close">CERRAR (E)</button>
+      </div>
+    </div>
+
+    <!-- Carpeta de la cátedra: teoría (101) -->
+    <div id="folder" class="overlay hidden">
+      <div class="dossier">
+        <div class="dossier-head">
+          <span class="d-name">GUSTAVO RAMOSCELLI</span>
+          <span class="d-sub">Cátedra · Programación IV — Apunte de teoría</span>
+        </div>
+        <div id="folder-body"></div>
+        <button id="folder-close">CERRAR (E)</button>
+      </div>
+    </div>
+
+    <!-- Pizarra de corcho con recortes -->
+    <div id="board" class="overlay hidden">
+      <div class="cork">
+        <div id="board-title" class="hidden"></div>
+        <div id="board-list"></div>
+        <button id="board-close">CERRAR (E)</button>
+      </div>
+    </div>
+
+    <!-- Cerradura de la 102 -->
+    <div id="keypad" class="overlay hidden">
+      <div class="terminal narrow">
+        <div class="t-head">CERRADURA · PUERTA 102</div>
+        <div id="kp-display">----</div>
+        <div id="kp-msg" class="t-sub">Ingresá el código de 4 dígitos.</div>
+        <div id="kp-pad"></div>
+        <div id="kp-lock" class="hidden"></div>
+        <button id="kp-decoder" class="hidden">⚙ USAR DECODIFICADOR</button>
+      </div>
+    </div>
+
+    <!-- Decodificador: editor de código (102) -->
+    <div id="decoder" class="overlay hidden">
+      <div class="terminal wide">
+        <div class="t-head">DECODIFICADOR · FUERZA BRUTA</div>
+        <div class="t-sub">
+          La cerradura en línea bloquea los reintentos, pero conseguiste una copia <em>offline</em> con sólo el
+          <strong>hash</strong> del PIN. Escribí el cuerpo de <code>decodificar(probar)</code> para probar del
+          0000 al 9999. <code>probar(codigo)</code> devuelve <code>true</code> cuando el código es el correcto.
+          <br /><strong>⚠ En este editor no se puede copiar ni pegar: el código lo tenés que escribir vos.</strong>
+        </div>
+        <pre id="dec-sig">// probar: (codigo: string) =&gt; boolean   ·   devolvé el código hallado, o null
+function decodificar(probar: (codigo: string) =&gt; boolean): string | null {</pre>
+        <textarea id="dec-code" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
+          placeholder="// escribí acá el cuerpo: recorré del 0000 al 9999, llamá a probar(codigo) y devolvé el que dé true"></textarea>
+        <pre id="dec-sig-end">}</pre>
+        <div id="dec-warn" class="hidden"></div>
+        <div id="dec-msg" class="t-sub"></div>
+        <div class="t-actions">
+          <button id="dec-run">▶ EJECUTAR</button>
+          <button id="dec-clear" class="ghost">BORRAR</button>
+          <button id="dec-close" class="ghost">VOLVER AL TECLADO</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Análisis de logs (103) -->
+    <div id="logs" class="overlay hidden">
+      <div class="terminal">
+        <div class="t-head">REGISTRO DEL PANEL DE DIAGNÓSTICO</div>
+        <div class="t-sub">Marcá TODAS las líneas que sean intentos de inyección de comandos o fuga de datos. Después confirmá.</div>
+        <div id="logs-list"></div>
+        <div id="logs-msg" class="t-sub"></div>
+        <div class="t-actions">
+          <button id="logs-submit">CONFIRMAR</button>
+          <button id="logs-close" class="ghost">SALIR</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reparar el código (103) -->
+    <div id="fix" class="overlay hidden">
+      <div class="terminal">
+        <div class="t-head">REPARAR PANEL DE PING — <span id="fix-step"></span></div>
+        <div id="fix-title" class="t-sub"></div>
+        <pre id="fix-code"></pre>
+        <div id="fix-options"></div>
+        <div id="fix-result" class="hidden">
+          <div id="fix-verdict"></div>
+          <div id="fix-expl"></div>
+          <button id="fix-next">CONTINUAR</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Firewall CSRF (104) -->
+    <div id="csrf" class="overlay hidden">
+      <div class="terminal wide">
+        <div class="t-head">CONSERJERÍA · ¿ACEPTAR O RECHAZAR?</div>
+        <div id="csrf-info" class="t-sub"></div>
+        <div id="csrf-list"></div>
+        <div id="csrf-msg" class="t-sub"></div>
+        <div class="t-actions">
+          <button id="csrf-submit">PROCESAR</button>
+          <button id="csrf-close" class="ghost">SALIR</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auditoría final (salida) -->
+    <div id="audit" class="overlay hidden">
+      <div class="terminal wide">
+        <div class="t-head">AUDITORÍA DE SALIDA · CHECKLIST</div>
+        <div class="t-sub">Mirá la configuración del servidor y marcá sólo lo que SÍ está bien implementado.</div>
+        <pre id="audit-config"></pre>
+        <div id="audit-list"></div>
+        <div id="audit-msg" class="t-sub"></div>
+        <div class="t-actions">
+          <button id="audit-submit">AUDITAR</button>
+          <button id="audit-close" class="ghost">SALIR</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="end" class="overlay hidden">
+      <div class="panel">
+        <h1>ESCAPASTE</h1>
+        <p id="end-stats"></p>
+        <h3>RANKING</h3>
+        <ol id="end-board"></ol>
+        <button id="again">JUGAR DE NUEVO</button>
+      </div>
+    </div>
+
+    <div id="gameover" class="overlay hidden">
+      <div class="panel gameover">
+        <h1 id="go-title">EL CÓDIGO<br />YA NO TE PERTENECE</h1>
+        <p id="go-reason"></p>
+        <button id="go-again">VOLVER A INTENTAR</button>
+      </div>
+    </div>
+
+
+    <!-- Aviso inicial: se muestra antes de la intro -->
+    <div id="disclaimer" class="overlay">
+      <div class="panel">
+        <h2>AVISO</h2>
+        <p class="lore">
+          <strong>Hotel Zero-Day</strong> es una obra de ficción. Los personajes, organizaciones y hechos de la historia
+          son ficticios: <strong>cualquier similitud con la realidad es mera coincidencia.</strong>
+        </p>
+        <p class="lore small">Los recortes periodísticos reales que aparecen en el hotel se citan con su medio, fecha y enlace originales.</p>
+        <button id="disclaimer-ok">ENTENDIDO</button>
+      </div>
+    </div>
+
+    <!-- Intro en cómic -->
+    <div id="comic" class="hidden">
+      <div id="comic-page"></div>
+      <div id="comic-nav">
+        <button id="comic-prev">◀ ANTERIOR</button>
+        <span id="comic-count"></span>
+        <button id="comic-next">SIGUIENTE ▶</button>
+        <button id="comic-skip">OMITIR INTRO ⏭</button>
+      </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
