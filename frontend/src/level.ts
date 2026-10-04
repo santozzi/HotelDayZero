@@ -504,20 +504,37 @@ function graffiti(text: string) {
   return t;
 }
 
-/** Mueve un círculo (aprox. cuadrado de lado 2r) resolviendo colisiones eje por eje. */
+// Tolerancia para los bordes: sin ella, 2.3 - 0.3 da 1.9999999… y el jugador "queda dentro" de la pared.
+const EPS = 1e-4;
+const overlapX = (x: number, r: number, b: Box) => x + r > b.minX + EPS && x - r < b.maxX - EPS;
+const overlapZ = (z: number, r: number, b: Box) => z + r > b.minZ + EPS && z - r < b.maxZ - EPS;
+
+/**
+ * Mueve un círculo (aprox. cuadrado de lado 2r) resolviendo colisiones eje por eje.
+ * Una colisión sólo puede ACORTAR el movimiento (nunca empujar más allá del punto de partida),
+ * así no hay "teletransportes" encadenando celdas de pared.
+ */
 export function moveWithCollisions(pos: THREE.Vector3, dx: number, dz: number, r: number, colliders: Box[]) {
-  pos.x += dx;
-  for (const b of colliders) {
-    if (!b.active || dx === 0) continue;
-    if (pos.x + r > b.minX && pos.x - r < b.maxX && pos.z + r > b.minZ && pos.z - r < b.maxZ) {
-      pos.x = dx > 0 ? b.minX - r : b.maxX + r;
+  if (dx !== 0) {
+    const sx = pos.x;
+    let tx = sx + dx;
+    for (const b of colliders) {
+      if (!b.active || !overlapZ(pos.z, r, b)) continue;
+      if (overlapX(tx, r, b) && !overlapX(sx, r, b)) {
+        tx = dx > 0 ? Math.min(tx, b.minX - r - EPS) : Math.max(tx, b.maxX + r + EPS);
+      }
     }
+    pos.x = tx;
   }
-  pos.z += dz;
-  for (const b of colliders) {
-    if (!b.active || dz === 0) continue;
-    if (pos.x + r > b.minX && pos.x - r < b.maxX && pos.z + r > b.minZ && pos.z - r < b.maxZ) {
-      pos.z = dz > 0 ? b.minZ - r : b.maxZ + r;
+  if (dz !== 0) {
+    const sz = pos.z;
+    let tz = sz + dz;
+    for (const b of colliders) {
+      if (!b.active || !overlapX(pos.x, r, b)) continue;
+      if (overlapZ(tz, r, b) && !overlapZ(sz, r, b)) {
+        tz = dz > 0 ? Math.min(tz, b.minZ - r - EPS) : Math.max(tz, b.maxZ + r + EPS);
+      }
     }
+    pos.z = tz;
   }
 }

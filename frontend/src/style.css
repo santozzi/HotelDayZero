@@ -383,3 +383,8 @@ button.link:hover { background: none; color: #d8c9a8; }
 #continue:hover { background: #2a5230; }
 #savehint { margin-top: 6px; color: #ffd24a; text-shadow: 0 0 6px rgba(255, 200, 60, 0.5); animation: blinkSave 1.2s steps(2) infinite; }
 @keyframes blinkSave { 50% { opacity: 0.35; } }
+
+.controls.warn { color: #c9894a; margin-top: 4px; }
+
+#kp-close { width: 100%; margin-top: 8px; font-size: 18px; }
+.t-head .lang { color: #3178c6; background: #e8f0fb; padding: 0 6px; border-radius: 3px; text-shadow: none; }

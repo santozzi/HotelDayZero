@@ -7,6 +7,9 @@ import { drawScreen, drawKeypad } from './textures';
 import { NOTES } from './notes';
 import { FULL_THEORY } from './theory';
 import { startComic, isComicOpen } from './comic';
+import { printDevConsole } from './devconsole';
+
+printDevConsole(); // al cargar: la V de Vertrix y la firma (las preguntas llegan al iniciar)
 
 const $ = (id: string) => document.getElementById(id) as HTMLElement;
 
@@ -232,6 +235,10 @@ document.addEventListener('keydown', (e) => {
     startGame();
   } else if (mode === 'panel' && (e.code === 'KeyE' || e.code === 'Escape') && (activePanel === 'note' || activePanel === 'folder' || activePanel === 'board')) {
     leavePanel();
+  } else if (mode === 'panel' && e.code === 'Escape' && activePanel === 'keypad') {
+    leavePanel();
+  } else if (mode === 'panel' && e.code === 'Escape' && activePanel === 'decoder') {
+    closeDecoder();
   }
 });
 document.addEventListener('keyup', (e) => (keys[e.code] = false));
@@ -253,6 +260,7 @@ async function startGame() {
 }
 
 function beginSession() {
+  printDevConsole(session!.quiz.questions);
   // Asignar un id de pregunta a cada terminal de quiz
   const quizStations = level.stations.filter((s) => s.kind === 'quiz');
   quizStations.forEach((s, i) => {
@@ -760,33 +768,53 @@ let integrityFlags = 0;
 const flagReasons = new Map<string, number>();
 let antiCheatArmed = false;
 
-function raiseFlag(reason: string) {
+function showIntegrity(reason: string) {
   integrityFlags++;
   flagReasons.set(reason, (flagReasons.get(reason) ?? 0) + 1);
-  if (session) api.flag(session.sessionId, reason);
-  sfx.wrong();
   const warn = $('dec-warn');
   warn.classList.remove('hidden');
   const lines = [...flagReasons.entries()].map(([r, n]) => `• ${r}${n > 1 ? ` ×${n}` : ''}`);
   warn.innerHTML = `⚠ INTEGRIDAD: se registraron ${integrityFlags} evento(s). Quedan en tu sesión.<br>${lines.join('<br>')}`;
 }
 
+function raiseFlag(reason: string) {
+  showIntegrity(reason);
+  if (session) api.flag(session.sessionId, reason);
+  sfx.wrong();
+}
+
 const onPaste = (e: Event) => { e.preventDefault(); triggerRobot('paste'); };
 const onDrop = (e: Event) => { e.preventDefault(); triggerRobot('paste'); };
 const onContext = (e: Event) => { e.preventDefault(); raiseFlag('Menú contextual'); };
 const onCopyCut = (e: Event) => { e.preventDefault(); raiseFlag('Copiar/cortar el código'); };
-const onKeyUp = (e: KeyboardEvent) => {
-  if (e.key === 'PrintScreen') {
-    raiseFlag('Tecla PrintScreen');
-    navigator.clipboard?.writeText?.('').catch(() => {});
+// --- Captura de pantalla: se detecta en TODA la partida y descuenta 200 puntos (lo aplica el servidor) ---
+let lastShot = 0;
+async function screenshotDetected(reason: string) {
+  if (!session || mode === 'menu' || mode === 'end' || mode === 'scare') return;
+  const now = Date.now();
+  if (now - lastShot < 1500) return; // una sola captura puede disparar más de una tecla
+  lastShot = now;
+  navigator.clipboard?.writeText?.('').catch(() => {});
+  sfx.wrong();
+  if (antiCheatArmed) showIntegrity(`${reason} (−200)`);
+  try {
+    const r = await api.penalty(session.sessionId, 'screenshot');
+    score = r.score;
+    updateHud();
+    if (r.applied) showMsg(`📷 Captura de pantalla detectada: −${r.penalty ?? 200} puntos.`, 4500);
+  } catch {
+    /* si falla la red, el servidor no descontó */
   }
-};
-const onKeyDown = (e: KeyboardEvent) => {
-  // Win+Shift+S (recorte de Windows) y Cmd+Shift+ (capturas de macOS)
-  if (e.shiftKey && (e.metaKey || e.ctrlKey) && ['S', 's', '3', '4', '5'].includes(e.key)) {
-    raiseFlag('Atajo de captura de pantalla');
+}
+document.addEventListener('keyup', (e) => {
+  if (e.key === 'PrintScreen') screenshotDetected('Tecla PrintScreen');
+});
+document.addEventListener('keydown', (e) => {
+  // Win+Shift+S (recorte de Windows) y Cmd+Shift+3/4/5 (capturas de macOS)
+  if (!e.repeat && e.shiftKey && (e.metaKey || e.ctrlKey) && ['S', 's', '3', '4', '5'].includes(e.key)) {
+    screenshotDetected('Atajo de captura de pantalla');
   }
-};
+});
 const onVisibility = () => { if (document.hidden && antiCheatArmed) raiseFlag('Saliste de la pestaña'); };
 const onBlur = () => { if (antiCheatArmed) raiseFlag('La ventana perdió el foco'); };
 
@@ -799,8 +827,6 @@ function armAntiCheat() {
   ta.addEventListener('contextmenu', onContext);
   ta.addEventListener('copy', onCopyCut);
   ta.addEventListener('cut', onCopyCut);
-  document.addEventListener('keyup', onKeyUp);
-  document.addEventListener('keydown', onKeyDown);
   document.addEventListener('visibilitychange', onVisibility);
   window.addEventListener('blur', onBlur);
 }
@@ -814,13 +840,13 @@ function disarmAntiCheat() {
   ta.removeEventListener('contextmenu', onContext);
   ta.removeEventListener('copy', onCopyCut);
   ta.removeEventListener('cut', onCopyCut);
-  document.removeEventListener('keyup', onKeyUp);
-  document.removeEventListener('keydown', onKeyDown);
   document.removeEventListener('visibilitychange', onVisibility);
   window.removeEventListener('blur', onBlur);
 }
 
 $('kp-decoder').addEventListener('click', openDecoder);
+// Salir del teclado para seguir buscando pistas en el cuarto (la puerta sigue trabada).
+$('kp-close').addEventListener('click', leavePanel);
 
 function openDecoder() {
   if (!hasDecoder) return;
@@ -1363,6 +1389,7 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
 });
+
 
 
 

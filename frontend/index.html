@@ -44,6 +44,7 @@
         <button id="enter">NUEVA PARTIDA</button>
         <button id="replay-intro" class="link">ver intro</button>
         <p class="controls">Mouse para mirar · WASD para moverte · Shift correr · E interactuar · F linterna · Esc pausa</p>
+        <p class="controls warn">📷 Cada captura de pantalla detectada resta 200 puntos.</p>
         <p id="start-error" class="error"></p>
         <p class="fiction-note">Obra de ficción: cualquier similitud con la realidad es mera coincidencia.</p>
       </div>
@@ -107,23 +108,25 @@
         <div id="kp-pad"></div>
         <div id="kp-lock" class="hidden"></div>
         <button id="kp-decoder" class="hidden">⚙ USAR DECODIFICADOR</button>
+        <button id="kp-close" class="ghost">SALIR A BUSCAR PISTAS (Esc)</button>
       </div>
     </div>
 
     <!-- Decodificador: editor de código (102) -->
     <div id="decoder" class="overlay hidden">
       <div class="terminal wide">
-        <div class="t-head">DECODIFICADOR · FUERZA BRUTA</div>
+        <div class="t-head">DECODIFICADOR · FUERZA BRUTA · <span class="lang">TYPESCRIPT</span></div>
         <div class="t-sub">
           La cerradura en línea bloquea los reintentos, pero conseguiste una copia <em>offline</em> con sólo el
-          <strong>hash</strong> del PIN. Escribí el cuerpo de <code>decodificar(probar)</code> para probar del
+          <strong>hash</strong> del PIN. Escribí en <strong>TypeScript</strong> el cuerpo de <code>decodificar(probar)</code> para probar del
           0000 al 9999. <code>probar(codigo)</code> devuelve <code>true</code> cuando el código es el correcto.
           <br /><strong>⚠ En este editor no se puede copiar ni pegar: el código lo tenés que escribir vos.</strong>
         </div>
-        <pre id="dec-sig">// probar: (codigo: string) =&gt; boolean   ·   devolvé el código hallado, o null
+        <pre id="dec-sig">// Lenguaje: TypeScript (podés usar anotaciones de tipo)
+// probar: (codigo: string) =&gt; boolean   ·   devolvé el código hallado, o null
 function decodificar(probar: (codigo: string) =&gt; boolean): string | null {</pre>
         <textarea id="dec-code" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"
-          placeholder="// escribí acá el cuerpo: recorré del 0000 al 9999, llamá a probar(codigo) y devolvé el que dé true"></textarea>
+          placeholder="// TypeScript · escribí acá el cuerpo: recorré del 0000 al 9999, llamá a probar(codigo) y devolvé el que dé true"></textarea>
         <pre id="dec-sig-end">}</pre>
         <div id="dec-warn" class="hidden"></div>
         <div id="dec-msg" class="t-sub"></div>

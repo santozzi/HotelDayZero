@@ -134,6 +134,23 @@ app.post('/api/flag', async (req, reply) => {
   return { flags: s.flags };
 });
 
+// Captura de pantalla detectada: descuenta puntos (y cuenta como alerta de integridad).
+const SCREENSHOT_PENALTY = 200;
+app.post('/api/penalty', async (req, reply) => {
+  const s = getSession(req.body?.sessionId, reply);
+  if (!s) return;
+  if (req.body?.type !== 'screenshot') return reply.code(400).send({ error: 'Penalización desconocida' });
+  const now = Date.now();
+  // una misma captura puede disparar varias teclas: se cobra una sola vez cada 1,5 s
+  if (s.lastPenalty && now - s.lastPenalty < 1500) return { score: s.score, flags: s.flags, applied: false };
+  s.lastPenalty = now;
+  s.score = Math.max(0, s.score - SCREENSHOT_PENALTY);
+  s.flags++;
+  s.screenshots = (s.screenshots ?? 0) + 1;
+  if (s.flagLog.length < 200) s.flagLog.push({ reason: `Captura de pantalla (-${SCREENSHOT_PENALTY})`, at: new Date(now).toISOString() });
+  return { score: s.score, flags: s.flags, applied: true, penalty: SCREENSHOT_PENALTY };
+});
+
 // ---------- Partidas guardadas ----------
 app.post('/api/save', async (req, reply) => {
   const s = getSession(req.body?.sessionId, reply);

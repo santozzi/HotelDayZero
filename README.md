@@ -86,6 +86,10 @@ El editor del decodificador está pensado para que el jugador **escriba** el có
 - **Detectado:** tecla PrintScreen (además se intenta vaciar el portapapeles), atajos de captura (Win+Shift+S, Cmd+Shift+3/4/5), cambiar de pestaña y perder el foco de la ventana.
 - **No se puede detectar desde el navegador:** una foto con el celular o la grabación con otro programa. Para eso hace falta supervisión presencial.
 
+**Capturas de pantalla:** en cualquier momento de la partida, cada captura detectada (PrintScreen o atajos de
+recorte) **resta 200 puntos** (lo descuenta el servidor, sin bajar de 0; una misma captura se cobra una sola vez).
+La pantalla de inicio avisa esta regla.
+
 Cada evento suma una "alerta de integridad" a la sesión; el total aparece en el ranking final (con un ⚠) para que el docente lo vea.
 | **103** | Inyección de comandos | Dos terminales: 1) leer los logs del panel y marcar los intentos de inyección (`;` `\|` `&&`) y la fuga de datos; 2) reparar el código del panel de ping eligiendo, paso a paso, lista blanca + `spawn` sin shell + menor privilegio. |
 | **104** | CSRF | Firewall de la conserjería: por cada petición entrante decidir Aceptar/Rechazar. Sólo valen POST + origen exacto + token correcto. Incluye la trampa del dominio parecido (`...local.premios.xyz`). |
@@ -105,6 +109,12 @@ de arriba a abajo + travesaño arriba) → **2 5 8 0**. Se puede cambiar en `bac
   puntos). Al terminar el juego la partida guardada se borra.
 - **Aviso inicial:** antes de la intro se muestra que es una obra de ficción y que *cualquier similitud con la
   realidad es mera coincidencia* (aclarando que los recortes reales se citan con su fuente).
+
+## Consola del navegador (F12)
+
+Al abrir las herramientas de desarrollo se ve la **V de Vertrix** en ASCII (en rojo), la **lista de preguntas** de la
+partida (al cargar todavía no hay; se reimprime al iniciar o continuar) y la firma **"powered by Sergio J. Antozzi"**.
+Está en `frontend/src/devconsole.ts`. Sólo muestra los enunciados: las respuestas nunca llegan al navegador.
 
 ## Estructura
 

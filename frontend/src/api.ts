@@ -119,6 +119,10 @@ export async function saveInfo(saveId: string): Promise<SaveInfo> {
   return res.json();
 }
 
+// Captura de pantalla detectada: el servidor descuenta puntos y devuelve el puntaje nuevo.
+export const penalty = (sessionId: string, type: 'screenshot') =>
+  post<{ score: number; flags: number; applied: boolean; penalty?: number }>('/api/penalty', { sessionId, type });
+
 // Reporte de integridad (pegar código, captura de pantalla, salir de la pestaña). Fire-and-forget.
 export function flag(sessionId: string, reason: string) {
   fetch('/api/flag', {
